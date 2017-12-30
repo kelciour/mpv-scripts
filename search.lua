@@ -8,17 +8,17 @@ Additional Keybidings:
            / - open or close search console
     Ctrl + , - find the previous occurrence
     Ctrl + . - find the next occurrence
-More info:
+More Information:
     The search is case insensitive and depends on the external .srt subtitles.
     Non-ASCII input won't work.
 Console Settings:
-    Update repl.lua default options below to increase the default font size, 
+    Update repl.lua default options below to increase the default font size. 
     For example, scale or font-size.
+Script Status:
+    Experimental.
 Credits:
     James Ross-Gowan for repl.lua (https://github.com/rossy/mpv-repl).
     Its complete code with some minor changes had been included in this script.
-Script Status:
-    Experimental.
 --]] 
 
 local auto_hide_console = true
