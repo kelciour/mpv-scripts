@@ -112,6 +112,10 @@ function convert_into_sentences(subs, subs_start, subs_end)
     return sentences, sentences_start, sentences_end
 end
 
+function string.starts(s, substring)
+   return string.sub(s, 1, string.len(substring)) == substring
+end
+
 function write_bilingual_subtitles(subs_original, subs_original_start, subs_original_end, subs_translated, subs_translated_start, subs_translated_end, subtitles_filename)
     if #subs_original == 0 or #subs_translated == 0 then
         return false
@@ -182,7 +186,7 @@ function write_bilingual_subtitles(subs_original, subs_original_start, subs_orig
             sub_line_start = sub_start
             sub_line_end = sub_end
         else
-            if (translated_sub_lines[i] == translated_sub_lines[i-1]) and translated_sub_lines[i] ~= "" then
+            if (translated_sub_lines[i] == translated_sub_lines[i-1] or string.starts(translated_sub_lines[i], translated_sub_lines[i-1])) and translated_sub_lines[i] ~= "" then
                 sub_line = sub_line .. " " .. sub_text
                 sub_line_end = sub_end
             else
