@@ -99,6 +99,10 @@ CREATE_SUBDECKS_FOR_CARDS = true
 -- If both width and height set to -1 the generated snapshots won't be resized.
 IMAGE_WIDTH = 400
 IMAGE_HEIGHT = -1
+
+-- Save the video image with subtitles (if they're visible), in its original resolution,
+-- i.e. options IMAGE_WIDTH and IMAGE_HEIGHT won't be applied.
+IMAGE_WITH_SUBTITLES = false
 --------------------------------
 
 -------- Video Settings --------
@@ -484,14 +488,18 @@ function export_screenshot()
     local image_filename = string.format("%s_%.3f.jpg", mp.get_property("filename/no-ext"), time_pos)
     local image_output = COLLECTION_MEDIA_DIR .. "/" .. image_filename
 
-    local args = {FFMPEG_PATH, '-y', '-ss', seconds_to_ffmpeg_time(time_pos), '-i', video_input, "-vframes", "1", "-q:v", "2", image_output}
-    
-    if IMAGE_WIDTH ~= -1 or IMAGE_HEIGHT ~= -1 then
-        table.insert(args, #args, "-vf")
-        table.insert(args, #args, string.format('scale=%d:%d', IMAGE_WIDTH, IMAGE_HEIGHT))
-    end
+    if IMAGE_WITH_SUBTITLES then
+        mp.commandv("screenshot-to-file", image_output)
+    else
+        local args = {FFMPEG_PATH, '-y', '-ss', seconds_to_ffmpeg_time(time_pos), '-i', video_input, "-vframes", "1", "-q:v", "2", image_output}
+        
+        if IMAGE_WIDTH ~= -1 or IMAGE_HEIGHT ~= -1 then
+            table.insert(args, #args, "-vf")
+            table.insert(args, #args, string.format('scale=%d:%d', IMAGE_WIDTH, IMAGE_HEIGHT))
+        end
 
-    utils.subprocess_detached({args = args})
+        utils.subprocess_detached({args = args})
+    end
 
     return image_filename
 end
