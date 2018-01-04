@@ -171,7 +171,9 @@ function hide_subtitles()
 end
 
 function on_seek()
-    mp.set_property("pause", "no")
+    if player_state == "replay" then
+        mp.set_property("pause", "no")
+    end
 end
 
 function on_playback_restart()
