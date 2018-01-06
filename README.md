@@ -10,7 +10,7 @@ Most of the scripts are experimental and may lack some functionality. Usage info
 
 - **sub-export** - extract selected subtitles from .mkv file
 
-- **sub-playback** - add interactive move, i.e. automatically pause at the end of the fragment with option to continue playback or replay it again with or without subtitles 
+- **sub-playback** - add interactive mode, i.e. automatically pause at the end of the fragment with option to continue playback or replay it again with or without subtitles 
 
 - **sub-replay** - replay previous sentence
 
