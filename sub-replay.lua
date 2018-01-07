@@ -158,6 +158,21 @@ function replay_previous_sentence_with_subtitles()
     replay_previous_sentence(true)
 end
 
+function skip_to_the_previous_subtitle()
+    local pos = mp.get_property_number("time-pos")
+
+    if pos ~= nil then
+        local sub_id = 1
+        while sub_id < #subs and subs_end[sub_id] < pos do
+          sub_id = sub_id + 1
+        end
+
+        if sub_id > 1 then
+            mp.commandv("seek", subs_start[sub_id - 1] + 0.025, "absolute+exact")
+        end
+    end
+end
+
 function skip_to_the_next_subtitle()
     mp.commandv("sub-seek", "1")
 end
@@ -213,6 +228,7 @@ function init()
     mp.add_key_binding("a", "replay-previous-sentence", replay_previous_sentence)
     mp.add_key_binding("A", "replay-previous-sentence-with-subtitles", replay_previous_sentence_with_subtitles)
     mp.add_key_binding("ctrl+a", "skip-to-the-next-subtitle", skip_to_the_next_subtitle)
+    mp.add_key_binding("ctrl+left", "skip-to-the-previous-subtitle", skip_to_the_previous_subtitle)
 end
 
 mp.register_event("file-loaded", init)
