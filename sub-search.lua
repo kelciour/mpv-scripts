@@ -771,7 +771,7 @@ function search(phrase, step)
         search_idx = 0
         search_results = {}
         prev_phrase = phrase
-        for start_time, end_time, text in string.gfind(data, "(%d%d:%d%d:%d%d,%d%d%d) %-%-> (%d%d:%d%d:%d%d,%d%d%d) ([^%z]-" .. nocase(phrase) .. "[^%z]-)") do
+        for start_time, end_time, text in string.gmatch(data, "(%d%d:%d%d:%d%d,%d%d%d) %-%-> (%d%d:%d%d:%d%d,%d%d%d) ([^%z]-" .. nocase(phrase) .. "[^%z]-)") do
             idx = idx + 1
             
             start_time = srt_time_to_seconds(start_time)            
