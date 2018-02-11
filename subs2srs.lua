@@ -281,7 +281,7 @@ function read_subtitles(srt_file_exts)
     subs = {}
     subs_start = {}
     subs_end = {}
-    for start_time, end_time, text in string.gfind(data, "(%d%d:%d%d:%d%d,%d%d%d) %-%-> (%d%d:%d%d:%d%d,%d%d%d)\n(.-)\n\n") do
+    for start_time, end_time, text in string.gmatch(data, "(%d%d:%d%d:%d%d,%d%d%d) %-%-> (%d%d:%d%d:%d%d,%d%d%d)\n(.-)\n\n") do
       table.insert(subs, text)
       table.insert(subs_start, srt_time_to_seconds(start_time))
       table.insert(subs_end, srt_time_to_seconds(end_time))
