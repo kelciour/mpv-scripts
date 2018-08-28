@@ -1,8 +1,15 @@
---  Usage: select subtitles and press X. 
---  Note: requires ffmpeg in PATH environment variable or edit ffmpeg_path in the script options,
---        for example, by replacing [[ffmpeg]] with [[C:\Programs\ffmpeg\bin\ffmpeg.exe]]
---  Note: the exported subtitles will be automatically selected with visibility set to true and 
----       it could take ~1-5 minutes to export them.
+--  Usage:
+--     Select subtitles and press Shift + X. 
+-- 
+--  Note:
+--     Requires FFmpeg in PATH environment variable or edit ffmpeg_path in the script options,
+--     for example, by replacing [[ffmpeg]] with [[C:\Programs\ffmpeg\bin\ffmpeg.exe]]
+--  Note: 
+--     A small circle at the top-right corner is a sign that export is happenning now.
+--  Note:
+--     The exported subtitles will be automatically selected with visibility set to true. 
+--  Note: 
+--     It could take ~1-5 minutes to export subtitles.
 
 utils = require 'mp.utils'
 
@@ -38,24 +45,34 @@ function export_selected_subtitles()
                 subtitles_ext = "." .. track_lang .. subtitles_ext
             end
             
-            local subtitles_file = mp.get_property("working-directory") .. "/" .. mp.get_property("filename/no-ext") .. subtitles_ext
+            subtitles_file = mp.get_property("working-directory") .. "/" .. mp.get_property("filename/no-ext") .. subtitles_ext
 
             mp.osd_message("Exporting selected subtitles")
 
-            local args = {ffmpeg_path, '-y', '-hide_banner', '-loglevel', 'error', '-i', video_file, "-map", string.format("0:%d", track_index), subtitles_file}
-            
-            local res = utils.subprocess({args = args })
-            
-            if res.status == 0 then
-                mp.osd_message("Finished exporting subtitles")
-                mp.commandv("sub-add", subtitles_file)
-                mp.set_property("sub-visibility", "yes")
-            else
-                mp.osd_message("Failed to export subtitles")
-            end
+            args = {ffmpeg_path, '-y', '-hide_banner', '-loglevel', 'error', '-i', video_file, "-map", string.format("0:%d", track_index), subtitles_file}
+
+            mp.add_timeout(mp.get_property_number("osd-duration") * 0.001, process)
+
+            break
         end
 
         i = i + 1
+    end
+end
+
+function process()
+    local screenx, screeny, aspect = mp.get_osd_size()
+
+    mp.set_osd_ass(screenx, screeny, "{\\an9}● ")
+    local res = utils.subprocess({ args = args })
+    mp.set_osd_ass(screenx, screeny, "")
+
+    if res.status == 0 then
+        mp.osd_message("Finished exporting subtitles")
+        mp.commandv("sub-add", subtitles_file)
+        mp.set_property("sub-visibility", "yes")
+    else
+        mp.osd_message("Failed to export subtitles")
     end
 end
 
