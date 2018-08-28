@@ -1,3 +1,7 @@
+--------- Current Status -------
+-- Outdated with the appearance of the mpv2anki add-on - https://ankiweb.net/shared/info/1213145732
+--------------------------------
+
 --------- Installation ---------
 -- 1. Install Anki (https://apps.ankiweb.net) & mpv (https://mpv.io) video player (or IINA for macOS).
 -- 2. Install FFmpeg.
