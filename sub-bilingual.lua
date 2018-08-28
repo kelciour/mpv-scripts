@@ -1,9 +1,9 @@
 -- Usage:
---    Ctrl+b - create bilingual subtitles (and automatically select as default subtitles with visibility set to true)
+--    Shift + B - create bilingual subtitles (and automatically select as default subtitles with visibility set to true)
 -- Note: 
 --    Requires the original subtitles and translated subtitles (*.srt) alongside with the video file. 
 -- Status:
---    Experimental & not interested & abandoned.
+--    Experimental & not interested.
 
 ------- Script Options -------
 srt_original_file_extensions = {".srt", ".en.srt", ".eng.srt"}
@@ -121,17 +121,20 @@ function write_bilingual_subtitles(subs_original, subs_original_start, subs_orig
         return false
     end
 
+    local screenx, screeny, aspect = mp.get_osd_size()
+    mp.set_osd_ass(screenx, screeny, "{\\an9}● ")
+
     local f = assert(io.open(subtitles_filename, "w"))
 
     f:write("[Script Info]", "\n\n")
     f:write("[V4+ Styles]", "\n")
     f:write("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding", "\n")
-    f:write("Style: Russian,Arial,16,&H009DDFF1,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1", "\n")
-    f:write("Style: English,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,0.25,2,10,10,10,1", "\n")
+    f:write("Style: English,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H50000000,0,0,0,0,100,100,0,0,4,1,6.25,2,10,10,10,1", "\n")
     f:write("[Events]", "\n")
     f:write("Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text", "\n")
     
     local translated_sub_lines = {}
+    local translates_sub_style = "\\N{\\fs2} \\N{\\fs14}{\\c&H009DDFF1&}"
     
     for i, sub_text in ipairs(subs_original) do
         local sub_start = subs_original_start[i]
@@ -190,8 +193,7 @@ function write_bilingual_subtitles(subs_original, subs_original_start, subs_orig
                 sub_line = sub_line .. " " .. sub_text
                 sub_line_end = sub_end
             else
-                f:write(string.format("Dialogue: 0,%s,%s,Russian,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), translated_sub_lines[i-1]))
-                f:write(string.format("Dialogue: 0,%s,%s,English,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), sub_line))
+                f:write(string.format("Dialogue: 0,%s,%s,English,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), sub_line .. translates_sub_style .. translated_sub_lines[i-1]))
     
                 sub_line = sub_text
                 sub_line_start = sub_start
@@ -199,16 +201,18 @@ function write_bilingual_subtitles(subs_original, subs_original_start, subs_orig
             end
         end
     end
-    f:write(string.format("Dialogue: 0,%s,%s,Russian,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), translated_sub_lines[#translated_sub_lines]))
-    f:write(string.format("Dialogue: 0,%s,%s,English,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), sub_line))
+    
+    f:write(string.format("Dialogue: 0,%s,%s,English,,0,0,0,,%s\n", seconds_to_ass_time(sub_line_start), seconds_to_ass_time(sub_line_end), sub_line .. translates_sub_style .. translated_sub_lines[#translated_sub_lines]))
 
     f:close()
+
+    mp.set_osd_ass(screenx, screeny, "")
 
     return true
 end
 
 function create_bilingual_subtitles()
-	local subs_translated, subs_translated_start, subs_translated_end = read_subtitles(srt_translated_file_extensions)
+    local subs_translated, subs_translated_start, subs_translated_end = read_subtitles(srt_translated_file_extensions)
 
     local subs_original, subs_original_start, subs_original_end = read_subtitles(srt_original_file_extensions)
     local sentences_original, sentences_original_start, sentences_original_end = convert_into_sentences(subs_original, subs_original_start, subs_original_end)
@@ -217,12 +221,12 @@ function create_bilingual_subtitles()
     
     local ret = write_bilingual_subtitles(sentences_original, sentences_original_start, sentences_original_end, subs_translated, subs_translated_start, subs_translated_end, subtitles_filename)
     if ret then
-    	mp.commandv("sub-add", subtitles_filename)
+        mp.commandv("sub-add", subtitles_filename)
         mp.set_property("sub-visibility", "yes")
-    	mp.osd_message("Finished creating bilingual subtitles")
+        mp.osd_message("Finished creating bilingual subtitles")
     else
-    	mp.osd_message("Failed to create bilingual subtitles")
+        mp.osd_message("Failed to create bilingual subtitles")
     end
 end
 
-mp.add_key_binding("ctrl+b", "create-bilingual-subtitles", create_bilingual_subtitles)
+mp.add_key_binding("B", "create-bilingual-subtitles", create_bilingual_subtitles)
