@@ -11,7 +11,7 @@
 --------- Script Options ---------
 srt_file_extensions = {".srt", ".en.srt", ".eng.srt"}
 
-gap_between_phrases = 0.5
+gap_between_phrases = 1.25
 phrase_padding = 0.25
 ----------------------------------
 
@@ -247,7 +247,7 @@ function interactive_mode()
 
             local ass_start = mp.get_property_osd("osd-ass-cc/0")
             local ass_stop = mp.get_property_osd("osd-ass-cc/1")
-            mp.osd_message(ass_start .. "{\\fs14}▐▐" .. ass_stop)
+            mp.osd_message(ass_start .. "{\\fs12}▐▐" .. ass_stop, 0.75)
 
             timer_pause = mp.add_timeout(phrase_padding, pause_playback)
         end
