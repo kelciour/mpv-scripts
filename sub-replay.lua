@@ -1,5 +1,6 @@
 -- Usage:
---           a - replay the previous sentence with subtitles
+--           a - replay the previous sentence
+--           A - replay the previous sentence with subtitles
 --    Ctrl + a - skip to the next subtitle
 -- Note:
 --    Requires the subtitles (*.srt) alongside with the video file.
@@ -119,7 +120,7 @@ function get_current_sentence_id()
     return sub_id
 end
 
-function replay_previous_sentence_with_subtitles()
+function replay_previous_sentence(flag)
     local pos = mp.get_property_number("time-pos")
     local sub_id = get_current_sentence_id()
 
@@ -130,21 +131,32 @@ function replay_previous_sentence_with_subtitles()
         end
 
         if sentences_start[sub_id] <= pos and pos <= sentences_end[sub_id] then
-            if (pos - sentences_start[sub_id]) / (sentences_end[sub_id] - sentences_start[sub_id]) > 0.6 then
+            if (pos - sentences_start[sub_id]) / (sentences_end[sub_id] - sentences_start[sub_id]) > 0.6 or (pos - sentences_start[sub_id]) > 1.0 then
                 prev_sub_id = sub_id
             end
         end
 
-        if sub_visibility == nil or player_state ~= "replay" then
+        if sub_visibility == nil or (player_state ~= "replay" and player_state ~= "replay-playback") then
             sub_visibility = mp.get_property("sub-visibility")
         end
         
         sub_duration = sentences_end[prev_sub_id] - sentences_start[prev_sub_id]
 
+        if flag ~= true then
+            sub_replay_visibility = sub_visibility
+        else
+            sub_replay_visibility = "yes"
+        end
+
         player_state = "replay"
+        mp.set_property("sub-visibility", "no")
         mp.commandv("seek", sentences_start[prev_sub_id] - sub_start_shift, "absolute+exact")
         mp.set_property("pause", "no")
     end
+end
+
+function replay_previous_sentence_with_subtitles()
+    replay_previous_sentence(true)
 end
 
 function skip_to_the_previous_subtitle()
@@ -166,33 +178,75 @@ function skip_to_the_next_subtitle()
     mp.commandv("sub-seek", "1")
 end
 
-function show_subtitles()
-    mp.set_property("sub-visibility", "yes")
-end
-
-function replay_finished()
-    mp.set_property("sub-visibility", sub_visibility)
-    player_state = nil
-end
-
 function on_seek()
     if show_timer ~= nil then
         show_timer:kill()
+        show_timer = nil
     end
 
     if hide_timer ~= nil then
         hide_timer:kill()
+        hide_timer = nil
     end
 
     if player_state == "replay" then
         mp.set_property("sub-visibility", "no")
     end
+
+    if player_state == "replay-playback" then
+        replay_finished()
+    end
+end
+
+function show_subtitles()
+    if sub_replay_visibility == "yes" then
+        player_state = "show-subtitles"
+        mp.set_property("sub-visibility", "yes")
+    end
+    show_timer = nil
+end
+
+function replay_finished()
+    player_state = "replay-finished"
+    mp.set_property("sub-visibility", sub_visibility)
+    hide_timer = nil
 end
 
 function on_playback_restart()
     if player_state == "replay" then
-        show_timer = mp.add_timeout(sub_start_shift + 0.05, show_subtitles)
-        hide_timer = mp.add_timeout(sub_start_shift + sub_duration - 0.05, replay_finished)
+        if sub_replay_visibility == "yes" then
+            show_timer = mp.add_timeout(sub_start_shift + 0.05, show_subtitles)
+        else
+            player_state = "replay-playback"
+        end
+
+        if sub_visibility == "no" then
+            hide_timer = mp.add_timeout(sub_start_shift + sub_duration - 0.05, replay_finished)
+        end
+    end
+end
+
+function on_pause_change(name, value)
+    if player_state == "replay" or player_state == "replay-playback" then
+        if value == true then
+            if show_timer ~= nil then show_timer:stop() end
+            if hide_timer ~= nil then hide_timer:stop() end
+        else
+            if show_timer ~= nil then show_timer:resume() end
+            if hide_timer ~= nil then hide_timer:resume() end
+        end
+    end
+end
+
+function on_sub_visibility_change(name, value)
+    if player_state ~= "replay" and player_state ~= "show-subtitles" and player_state ~= "replay-finished" then
+        sub_visibility = mp.get_property("sub-visibility")
+    end
+
+    if player_state == "show-subtitles" then
+        player_state = "replay-playback"
+    elseif player_state == "replay-finished" then
+        player_state = nil
     end
 end
 
@@ -202,13 +256,18 @@ function init()
     if ret == false or #subs == 0 then
         return
     end
-    
+
     convert_into_sentences()
-       
+
+    sub_visibility = mp.get_property("sub-visibility")
+
     mp.register_event("seek", on_seek)
     mp.register_event("playback-restart", on_playback_restart)
+    mp.observe_property("pause", "bool", on_pause_change)
+    mp.observe_property("sub-visibility", "bool", on_sub_visibility_change)
 
-    mp.add_key_binding("a", "replay-previous-sentence-with-subtitles", replay_previous_sentence_with_subtitles)
+    mp.add_key_binding("a", "replay-previous-sentence", replay_previous_sentence)
+    mp.add_key_binding("A", "replay-previous-sentence-with-subtitles", replay_previous_sentence_with_subtitles)
     mp.add_key_binding("ctrl+a", "skip-to-the-next-subtitle", skip_to_the_next_subtitle)
 end
 
