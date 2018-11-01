@@ -69,7 +69,8 @@ function seconds_to_time_string(duration, flag)
 end
 
 function open_subtitles_file()
-    local srt_filename = mp.get_property("working-directory") .. "/" .. mp.get_property("filename/no-ext")
+    local video_path = mp.get_property("path")
+    local srt_filename = video_path:gsub('\\','/'):match("^(.+)/.+$") .. "/" .. mp.get_property("filename/no-ext")
     
     for i, ext in ipairs(srt_file_extensions) do
         local f, err = io.open(srt_filename .. ext, "r")
@@ -296,7 +297,7 @@ function cut_audio_fragment()
             "--end", end_timestamp,
             "--aid", aid,
             "--video=no",
-            "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
+            -- "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
             "--o=" .. filename
         }
 
@@ -341,8 +342,7 @@ function cut_video_fragment()
             ".",
             seconds_to_time_string(start_timestamp, true),
             "-",
-            seconds_to_time_string(end_timestamp, true),
-            ".mp4"
+            seconds_to_time_string(end_timestamp, true)
         }
 
         args = {
@@ -351,10 +351,11 @@ function cut_video_fragment()
             "--start", start_timestamp,
             "--end", end_timestamp,
             "--aid", aid,
-            "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
+            "--sub=no",
+            -- "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
             "--ovc=libx264",
             "--ovcopts-add=preset=" .. video_encoding_preset,
-            "--o=" .. filename
+            "--o=" .. filename .. ".mp4"
         }
 
         if video_path:sub(1, 4) == "http" and mp.get_property("ytdl-format") ~= "" then
@@ -395,9 +396,9 @@ function cut_video_fragment_with_subtitles()
         end
 
         d = 0.2
-        t = end_timestamp - start_timestamp
-        
-        subtitle_filename = working_dir .. "/" .. video_filename
+        t = end_timestamp - start_timestamp      
+
+        subtitle_filename = video_path:gsub('\\','/'):match("^(.+)/.+$") .. "/" .. video_filename
 
         for i, ext in ipairs(srt_file_extensions) do
             f = io.open(subtitle_filename .. ext, "r")
@@ -420,8 +421,6 @@ function cut_video_fragment_with_subtitles()
             subtitle_filename = string.gsub(subtitle_filename, "'", "\\\\\\'")
         end
 
-        video_absolute_path = working_dir .. "/" .. video_file
-
         filename = table.concat{
             working_dir,
             "/",
@@ -440,7 +439,7 @@ function cut_video_fragment_with_subtitles()
             ffmpeg_path,
             "-y",
             "-ss", start_timestamp,
-            "-i", video_absolute_path,
+            "-i", video_path,
             "-t", t,
             "-map", "0:v:0",
             "-map", "0:a:" .. ff_aid,
