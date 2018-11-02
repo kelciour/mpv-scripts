@@ -345,19 +345,50 @@ function cut_video_fragment()
             seconds_to_time_string(end_timestamp, true)
         }
 
-        args = {
-            mpv_path,
-            video_path,
-            "--start", start_timestamp,
-            "--end", end_timestamp,
-            "--aid", aid,
-            "--sub=no",
-            -- "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
-            "--ovc=libx264",
-            "--ovcopts-add=profile=high,level=41",
-            "--ovcopts-add=preset=" .. video_encoding_preset,
-            "--o=" .. filename .. ".mp4"
-        }
+        if video_path:sub(1, 4) == "http" then
+            args = {
+                mpv_path,
+                video_path,
+                "--start", start_timestamp,
+                "--end", end_timestamp,
+                "--aid", aid,
+                "--sub=no",
+                -- "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
+                "--ovc=libx264",
+                "--ovcopts-add=profile=high,level=41",
+                "--ovcopts-add=preset=" .. video_encoding_preset,
+                "--o=" .. filename .. ".mp4"
+            }
+        else
+            local i = 0
+            local ff_aid = 0
+            local tracks_count = mp.get_property_number("track-list/count")
+            while i < tracks_count do
+                local track_type = mp.get_property(string.format("track-list/%d/type", i))
+                local track_index = mp.get_property_number(string.format("track-list/%d/ff-index", i))
+                local track_selected = mp.get_property(string.format("track-list/%d/selected", i))
+                local track_lang = mp.get_property(string.format("track-list/%d/lang", i))
+                local track_external = mp.get_property(string.format("track-list/%d/external", i))
+
+                i = i + 1
+            end
+
+            args = {
+                ffmpeg_path,
+                "-y",
+                "-ss", start_timestamp,
+                "-i", video_path,
+                "-t", t,
+                "-map", "0:v:0",
+                "-map", "0:a:" .. ff_aid,
+                "-af", "afade=t=in:st=0:d=" .. d .. ",afade=t=out:st=" .. (t - d) .. ":d=" .. d,
+                "-c:v", "libx264",
+                "-preset", video_encoding_preset,
+                "-c:a", "aac",
+                "-ac", "2",
+                filename .. ".mp4"
+            }
+        end
 
         if video_path:sub(1, 4) == "http" and mp.get_property("ytdl-format") ~= "" then
             table.insert(args, #args, "--ytdl-format=" .. mp.get_property("ytdl-format"))
@@ -387,11 +418,6 @@ function cut_video_fragment_with_subtitles()
             local track_selected = mp.get_property(string.format("track-list/%d/selected", i))
             local track_lang = mp.get_property(string.format("track-list/%d/lang", i))
             local track_external = mp.get_property(string.format("track-list/%d/external", i))
-
-            if track_type == "audio" and track_selected == "yes" then
-                ff_aid = track_index - 1
-                break
-            end
 
             i = i + 1
         end
