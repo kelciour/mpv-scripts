@@ -354,6 +354,7 @@ function cut_video_fragment()
             "--sub=no",
             -- "--af=afade=t=in:st=" .. start_timestamp .. ":d=" .. d .. ",afade=t=out:st=" .. (end_timestamp - d) .. ":d=" .. d,
             "--ovc=libx264",
+            "--ovcopts-add=profile=high,level=41",
             "--ovcopts-add=preset=" .. video_encoding_preset,
             "--o=" .. filename .. ".mp4"
         }
