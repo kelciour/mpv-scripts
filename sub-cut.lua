@@ -209,7 +209,7 @@ function format_filename(filename)
     local t = {}
     for i = 1, #filename do
         local c = filename:sub(i,i)
-        if string.find(valid_characters, c) then
+        if string.find(valid_characters, c, 1, true) then
             t[#t+1] = c
         else
             t[#t+1] = "#"
