@@ -703,7 +703,8 @@ function srt_time_to_seconds(time)
 end
 
 function open_subtitles_file()
-    local srt_filename = mp.get_property("working-directory") .. "/" .. mp.get_property("filename/no-ext")
+    local video_path = mp.get_property("path")
+    local srt_filename = video_path:gsub('\\','/'):match("^(.+)/.+$") .. "/" .. mp.get_property("filename/no-ext")
     
     for i, ext in ipairs(srt_file_extensions) do
         local f, err = io.open(srt_filename .. ext, "r")
