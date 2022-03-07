@@ -22,7 +22,6 @@ Credits:
 --]] 
 
 local auto_hide_console = true
-local srt_file_extensions = {".srt", ".en.srt", ".eng.srt"}
 
 ------------- repl.lua -------------
 -- repl.lua -- A graphical REPL for mpv input commands
@@ -703,15 +702,12 @@ function srt_time_to_seconds(time)
 end
 
 function open_subtitles_file()
-    local video_path = mp.get_property("path")
-    local srt_filename = video_path:gsub('\\','/'):match("^(.+)/.+$") .. "/" .. mp.get_property("filename/no-ext")
+    local srt_filename = mp.get_property("current-tracks/sub/external-filename")
     
-    for i, ext in ipairs(srt_file_extensions) do
-        local f, err = io.open(srt_filename .. ext, "r")
+    local f, err = io.open(srt_filename, "r")
         
-        if f then
-            return f
-        end
+    if f then
+        return f
     end
 
     return false
